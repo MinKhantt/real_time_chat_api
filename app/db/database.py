@@ -9,7 +9,7 @@ from app.core.config import settings
 engine = create_engine(settings.DATABASE_URL, future=True)
 
 SessionLocal = sessionmaker(
-    autocmmit=False,
+    autocommit=False,
     autoflush=False,
     bind=engine, 
     future=True

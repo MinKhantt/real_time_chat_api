@@ -14,4 +14,4 @@ class User(Base):
     is_active = Column(Boolean, server_default='TRUE', nullable=False)
     is_superuser = Column(Boolean, server_default='FALSE', nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), onupdate=func.now())
+    updated_at = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now(), nullable=False)
