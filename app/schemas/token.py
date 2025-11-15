@@ -1,8 +1,11 @@
 from pydantic import BaseModel, Field
 from uuid import UUID
 
+
 class TokenData(BaseModel):
-    user_id: UUID = Field(..., description="Unique identifier for the user associated with the token")
+    user_id: UUID = Field(
+        ..., description="Unique identifier for the user associated with the token"
+    )
 
 
 class TokenResponse(BaseModel):

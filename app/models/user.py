@@ -4,6 +4,7 @@ import uuid
 
 from app.db.database import Base
 
+
 class User(Base):
     __tablename__ = "users"
 
@@ -11,7 +12,9 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False)
     full_name = Column(String, index=True, nullable=False)
     hashed_password = Column(String, nullable=False)
-    is_active = Column(Boolean, server_default='TRUE', nullable=False)
-    is_superuser = Column(Boolean, server_default='FALSE', nullable=False)
+    is_active = Column(Boolean, server_default="TRUE", nullable=False)
+    is_superuser = Column(Boolean, server_default="FALSE", nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), default=func.now(), onupdate=func.now(), nullable=False)
+    updated_at = Column(
+        DateTime(timezone=True), default=func.now(), onupdate=func.now(), nullable=False
+    )
