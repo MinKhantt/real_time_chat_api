@@ -1,8 +1,8 @@
-"""init alembic and create user table
+"""create user table
 
-Revision ID: 4299abb30fb5
-Revises: 
-Create Date: 2025-11-08 21:46:12.668039
+Revision ID: 49f581a2eb19
+Revises: cf2eb0bd9937
+Create Date: 2025-11-16 21:53:02.856760
 
 """
 from typing import Sequence, Union
@@ -12,8 +12,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '4299abb30fb5'
-down_revision: Union[str, Sequence[str], None] = None
+revision: str = '49f581a2eb19'
+down_revision: Union[str, Sequence[str], None] = 'cf2eb0bd9937'
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
@@ -29,7 +29,7 @@ def upgrade() -> None:
     sa.Column('is_active', sa.Boolean(), server_default='TRUE', nullable=False),
     sa.Column('is_superuser', sa.Boolean(), server_default='FALSE', nullable=False),
     sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=True),
-    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
+    sa.Column('updated_at', sa.DateTime(timezone=True), nullable=False),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_users_email'), 'users', ['email'], unique=True)

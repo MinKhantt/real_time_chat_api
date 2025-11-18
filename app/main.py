@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.routes import user, auth
@@ -25,3 +25,13 @@ app.add_middleware(
 @app.get("/")
 async def read_root():
     return {"Hello": "World"}
+
+def write_notification(email: str, message=""):
+    with open("app/test.txt", "a") as email_file:
+        content = f"Notification for {email}: {message}\n"
+        email_file.write(content)
+
+@app.post("/sent-notification/{email}")
+async def send_notification(email: str, background_tasks: BackgroundTasks):
+    background_tasks.add_task(write_notification, email, message="blah blah")
+    return {"message": "Notification sent in the background"}

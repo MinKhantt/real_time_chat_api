@@ -1,14 +1,21 @@
 from fastapi import HTTPException, status
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
 
 from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate
 from app.core.security import is_strong_password, get_hashed_password
+from app.utils.user import (
+    get_user_by_id,
+    get_user_by_email,
+    get_user_by_email_excluding_id,
+    get_all_users,
+)
 
 
-def create_user_service(user: UserCreate, db: Session):
-    existing_user = db.query(User).filter(User.email == user.email).first()
+async def create_user_service(user: UserCreate, session: AsyncSession):
+    existing_user = await get_user_by_email(user.email, session)
+
     if existing_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -27,14 +34,15 @@ def create_user_service(user: UserCreate, db: Session):
         **user.model_dump(exclude={"password"}),
         hashed_password=hashed_password,
     )
-    db.add(new_user)
-    db.commit()
-    db.refresh(new_user)
+    session.add(new_user)
+    await session.commit()
+    await session.refresh(new_user)
     return new_user
 
 
-def get_single_user_service(user_id: UUID, db: Session):
-    user = db.query(User).filter(User.id == user_id).first()
+async def get_single_user_service(user_id: UUID, session: AsyncSession):
+    user = await get_user_by_id(user_id, session)
+
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -43,17 +51,16 @@ def get_single_user_service(user_id: UUID, db: Session):
     return user
 
 
-def get_all_users_service(db: Session):
-    users = db.query(User).all()
-    return users
+async def get_all_users_service(skip: int, limit: int, session: AsyncSession):
+    return await get_all_users(skip, limit, session)
 
 
-def update_user_service(
+async def update_user_service(
     user_id: UUID,
     user_update: UserUpdate,
-    db: Session,
+    session: AsyncSession,
 ):
-    user = db.query(User).filter(User.id == user_id).first()
+    user = await get_user_by_id(user_id, session)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -61,10 +68,8 @@ def update_user_service(
         )
 
     if user_update.email:
-        existing_user = (
-            db.query(User)
-            .filter(User.email == user_update.email, User.id != user_id)
-            .first()
+        existing_user = await get_user_by_email_excluding_id(
+            user_update.email, user_id, session
         )
         if existing_user:
             raise HTTPException(
@@ -72,26 +77,29 @@ def update_user_service(
                 detail="Email already registered by another user",
             )
 
-    for var, value in vars(user_update).items():
-        if value is not None:
-            setattr(user, var, value)
+    # for var, value in vars(user_update).items():
+    #     if value is not None:
+    #         setattr(user, var, value)
+    for var, value in user_update.model_dump(exclude_unset=True).items():
+        setattr(user, var, value)
 
-    db.commit()
-    db.refresh(user)
+
+    await session.commit()
+    await session.refresh(user)
     return user
 
 
-def delete_user_service(
+async def delete_user_service(
     user_id: UUID,
-    db: Session,
+    session: AsyncSession,
 ):
-    user = db.query(User).filter(User.id == user_id).first()
+    user = await get_user_by_id(user_id, session)
     if not user:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="User not found",
         )
 
-    db.delete(user)
-    db.commit()
+    await session.delete(user)
+    await session.commit()
     return None
