@@ -1,7 +1,7 @@
 from fastapi import FastAPI, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routes import user, auth
+from app.api.v1 import user, auth
 from app.core.config import settings
 
 app = FastAPI(
@@ -10,8 +10,9 @@ app = FastAPI(
     version="1.0.0",
 )
 
-app.include_router(user.router, prefix=settings.API_PREFIX)
-app.include_router(auth.router, prefix=settings.API_PREFIX)
+api_prefix_v1 = f"{settings.API_PREFIX}{settings.API_V1}"
+app.include_router(user.router, prefix=api_prefix_v1)
+app.include_router(auth.router, prefix=api_prefix_v1)
 
 app.add_middleware(
     CORSMiddleware,
@@ -35,3 +36,5 @@ def write_notification(email: str, message=""):
 async def send_notification(email: str, background_tasks: BackgroundTasks):
     background_tasks.add_task(write_notification, email, message="blah blah")
     return {"message": "Notification sent in the background"}
+
+
