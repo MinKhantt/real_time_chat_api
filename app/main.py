@@ -27,14 +27,21 @@ app.add_middleware(
 async def read_root():
     return {"Hello": "World"}
 
-def write_notification(email: str, message=""):
-    with open("app/test.txt", "a") as email_file:
+def write_notification(email: str, message: str):
+    import os
+    os.makedirs("logs", exist_ok=True)
+    with open("logs/notifications.txt", "a") as email_file:
         content = f"Notification for {email}: {message}\n"
         email_file.write(content)
 
 @app.post("/sent-notification/{email}")
-async def send_notification(email: str, background_tasks: BackgroundTasks):
-    background_tasks.add_task(write_notification, email, message="blah blah")
+async def send_notification(
+    email: str,
+    background_tasks: BackgroundTasks,
+    # Add a default value to make the parameter optional (query param)
+    message: str = "Notification sent without a custom message.", 
+):
+    background_tasks.add_task(write_notification, email, message)
     return {"message": "Notification sent in the background"}
 
 

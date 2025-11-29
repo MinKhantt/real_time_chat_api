@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, ConfigDict, Field, EmailStr
 from uuid import UUID
 from typing import Optional
 from datetime import datetime
@@ -7,7 +7,7 @@ from datetime import datetime
 class UserCreate(BaseModel):
     email: EmailStr = Field(..., description="The user's email address")
     password: str = Field(..., description="The user's password")
-    full_name: Optional[str] = Field(None, description="The user's full name")
+    full_name: str = Field("", description="The user's full name")
 
 
 class UserUpdate(BaseModel):
@@ -31,5 +31,7 @@ class UserResponse(BaseModel):
         None, description="Timestamp when the user was last updated"
     )
 
-    class Config:
-        from_attributes = True
+    # class Config:
+    #     from_attributes = True
+    # Pydantic V2 approach
+    model_config = ConfigDict(from_attributes=True)

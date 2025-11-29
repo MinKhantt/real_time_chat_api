@@ -1,0 +1,50 @@
+services:
+  db:
+    container_name: postgresql_db
+    image: postgres
+    restart: always
+    ports: 
+      - "5432:5432"
+    environment: 
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+
+  pgadmin:
+    container_name: pgadmin
+    image: dpage/pgadmin4
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+
+  redis:
+    image: redis:alpine
+    ports:
+      - "6379:6379"
+
+
+  app:
+    container_name: fastapi_app
+    build: .
+    command: bash -c "uv sync --frozen && uv run alembic upgrade head && uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    volumes:
+      - .:/app
+      - app_venv:/app/.venv
+    ports:
+      - "8000:8000"
+    restart: always
+    depends_on:
+      - db
+      - redis
+    env_file:
+      - .env
+
+volumes:
+  postgres_data:
+  app_venv:

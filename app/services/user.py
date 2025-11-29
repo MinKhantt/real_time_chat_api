@@ -1,6 +1,6 @@
-from fastapi import HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import UUID
+import json
 
 from app.models.user import User
 from app.schemas.user import UserCreate, UserUpdate
@@ -11,22 +11,23 @@ from app.utils.user import (
     get_user_by_email_excluding_id,
     get_all_users,
 )
+from app.core.redis import redis_client
+from app.exceptions.user import (
+    UserNotFoundError,
+    UserEmailExistsError,
+    UserEmailAlreadyRegisteredError,
+    WeakPasswordError,
+)
 
 
 async def create_user_service(user: UserCreate, session: AsyncSession):
     existing_user = await get_user_by_email(user.email, session)
 
     if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User with this email already exists.",
-        )
+        raise UserEmailExistsError()
 
     if not is_strong_password(user.password):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Password does not meet strength requirements.",
-        )
+        raise WeakPasswordError()
 
     hashed_password = get_hashed_password(user.password)
 
@@ -41,18 +42,39 @@ async def create_user_service(user: UserCreate, session: AsyncSession):
 
 
 async def get_single_user_service(user_id: UUID, session: AsyncSession):
+
+    redis_key = f"user:{user_id}"
+
+    cached_user = await redis_client.get(redis_key)
+    if cached_user:
+        return json.loads(cached_user)
+
     user = await get_user_by_id(user_id, session)
 
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
-        )
-    return user
+        raise UserNotFoundError()
+    
+    # Convert ORM object to dict before caching and returning 
+    # (using to_dict() for consistency with get_all_users_service)
+    user_dict = user.to_dict()
+    
+    await redis_client.set(redis_key, json.dumps(user_dict), ex=50)
+    return user_dict
 
 
 async def get_all_users_service(skip: int, limit: int, session: AsyncSession):
-    return await get_all_users(skip, limit, session)
+    redis_key = f"users:{skip}:{limit}"
+    cached_user = await redis_client.get(redis_key)
+    if cached_user:
+        return json.loads(cached_user)
+
+    users = await get_all_users(skip, limit, session)
+
+    users_dict = [user.to_dict() for user in users]
+
+    await redis_client.set(redis_key, json.dumps(users_dict), ex=60)
+
+    return users_dict
 
 
 async def update_user_service(
@@ -62,20 +84,14 @@ async def update_user_service(
 ):
     user = await get_user_by_id(user_id, session)
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
-        )
+        raise UserNotFoundError()
 
     if user_update.email:
         existing_user = await get_user_by_email_excluding_id(
             user_update.email, user_id, session
         )
         if existing_user:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Email already registered by another user",
-            )
+            raise UserEmailAlreadyRegisteredError()
 
     # for var, value in vars(user_update).items():
     #     if value is not None:
@@ -95,10 +111,7 @@ async def delete_user_service(
 ):
     user = await get_user_by_id(user_id, session)
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found",
-        )
+        raise UserNotFoundError()
 
     await session.delete(user)
     await session.commit()

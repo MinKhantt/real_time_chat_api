@@ -18,3 +18,19 @@ class User(Base):
     updated_at = Column(
         DateTime(timezone=True), default=func.now(), onupdate=func.now(), nullable=False
     )
+
+    # For caching and serialization
+    def to_dict(self):
+        return {
+            "id": str(self.id),
+            "email": self.email,
+            "full_name": self.full_name,
+            "is_active": self.is_active,
+            "is_superuser": self.is_superuser,
+            "created_at": str(self.created_at),
+            "updated_at": str(self.updated_at),
+        }
+    
+    def as_dict(self):
+        """Alias for to_dict() for compatibility."""
+        return self.to_dict()

@@ -1,25 +1,35 @@
-from pydantic_settings import BaseSettings
-from dotenv import load_dotenv
-import os
-
-load_dotenv()
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    DATABASE_URL: str = os.getenv("DATABASE_URL")
-    API_PREFIX: str = os.getenv("API_PREFIX", "/api")
-    API_V1: str = os.getenv("API_V1", "/v1")
-    DEBUG: bool = os.getenv("DEBUG", "False").lower() in ("true", "1", "t")
-    ALGORITHM: str = os.getenv("ALGORITHM", "HS256")
-    SECRET_KEY: str = os.getenv("SECRET_KEY", "default_secret_key")
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = int(
-        os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30")
-    )
+    # Database settings
+    DB_USER: str
+    DB_PASSWORD: str
+    DB_NAME: str
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = True
+    @property
+    def DATABASE_URL(self) -> str:
+        return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}@db:5432/{self.DB_NAME}"
+
+    # API settings
+    # Add default values to formerly required fields
+    API_PREFIX: str = "/api" 
+    API_V1: str = "/v1"
+    DEBUG: bool = False
+    ALGORITHM: str = "HS256"
+    SECRET_KEY: str = "your-insecure-default-secret-key-change-this-in-env"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+
+    # Redis settings
+    REDIS_HOST: str = "redis"
+    REDIS_PORT: int = 6379
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=True,
+        extra="ignore",
+    )
 
 
 settings = Settings()
