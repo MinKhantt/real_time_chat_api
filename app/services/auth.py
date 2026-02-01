@@ -39,7 +39,7 @@ async def login_for_access_token_service(
 
 
 async def refresh_token_service(refresh_token: str) -> TokenResponse:
-    """Refresh an access token using a valid refresh token."""
+    
     new_token = refresh_access_token(refresh_token)
     
     if new_token is None:

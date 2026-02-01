@@ -39,7 +39,6 @@ async def login_for_access_token(
 async def refresh_token(
     refresh_token_request: RefreshTokenRequest,
 ):
-    """Refresh an access token using a valid refresh token."""
     return await refresh_token_service(refresh_token_request.refresh_token)
 
 
