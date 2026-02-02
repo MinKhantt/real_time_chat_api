@@ -1,4 +1,4 @@
-# Real-Time Chat App (Backend)
+# Real-Time Chat Api (Backend)
 
 This project is a backend service for a real-time chat application.  
 It supports user authentication, conversations, messaging, and real-time communication using WebSockets.
