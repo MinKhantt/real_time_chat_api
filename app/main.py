@@ -1,7 +1,7 @@
 from fastapi import FastAPI, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.v1 import user, auth
+from app.api.v1 import user, auth, chat
 from app.core.config import settings
 
 app = FastAPI(
@@ -13,6 +13,7 @@ app = FastAPI(
 api_prefix_v1 = f"{settings.API_PREFIX}{settings.API_V1}"
 app.include_router(user.router, prefix=api_prefix_v1)
 app.include_router(auth.router, prefix=api_prefix_v1)
+app.include_router(chat.router, prefix=api_prefix_v1)
 
 app.add_middleware(
     CORSMiddleware,

@@ -18,7 +18,7 @@ from app.utils.user import get_user_by_id, get_user_by_email
 from app.db.database import get_async_session
 from app.exceptions.auth import InvalidCredentialsError, InactiveUserError
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/v1/auth/login")
 
 
 async def authenticate_user(

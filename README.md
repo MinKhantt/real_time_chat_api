@@ -1,50 +1,76 @@
-# Real-Time Chat Api (Backend)
+# Real-Time Chat API (Backend)
 
-This project is a backend service for a real-time chat application.  
-It supports user authentication, conversations, messaging, and real-time communication using WebSockets.
+Backend service for a real-time chat application. It provides authentication, 1-to-1 conversations, message history, and real-time messaging over WebSockets. The system is async-first for performance and scalability.
 
-The backend is built with an async-first approach for better performance and scalability.
+## What’s Implemented
+- User registration, login, and access control (JWT)
+- 1-to-1 conversations
+- Message history
+- WebSocket real-time messaging
+- Redis Pub/Sub for multi-instance broadcast
 
 ## Tech Stack
-
-- **FastAPI** – High-performance async Python web framework
+- **FastAPI** – Async Python web framework
 - **WebSockets** – Real-time messaging
-- **SQLAlchemy (Async)** – Async ORM for database access
+- **SQLAlchemy (Async)** – ORM for DB access
 - **Alembic** – Database migrations
-- **PostgreSQL** – Primary relational database
+- **PostgreSQL** – Primary database
 - **AsyncPG** – Async PostgreSQL driver
-- **Redis** – Caching and real-time support
-- **JWT (python-jose)** – Authentication & authorization
-- **Passlib / Argon2** – Secure password hashing
-- **Pydantic** – Data validation and settings management
+- **Redis** – Caching + Pub/Sub
+- **JWT (python-jose)** – Auth
+- **Passlib / Argon2** – Password hashing
+- **Pydantic** – Data validation
 - **Docker & Docker Compose** – Containerization
-- **Pytest** – Async testing setup
+- **Pytest** – Testing
 
 ## Project Structure
-
-The project follows a clean, modular architecture:
-- `api` – Versioned API routes
-- `models` – SQLAlchemy models
-- `schemas` – Pydantic schemas
-- `services` – Business logic
-- `core` – Config, security, Redis
-- `db` – Async database setup
-- `alembic` – Database migrations
+- `app/api` – Versioned API routes
+- `app/models` – SQLAlchemy models
+- `app/schemas` – Pydantic schemas
+- `app/services` – Business logic
+- `app/core` – Config, security, Redis, WebSockets
+- `app/db` – Async database setup
+- `alembic` – Migrations
 - `tests` – Automated tests
 
+## Real-Time Chat
+
+### REST
+- Create or get a 1-to-1 conversation
+  - `POST /api/v1/chat/conversations`
+  - Body: `{"recipient_id": "<UUID>"}`
+
+- Fetch message history
+  - `GET /api/v1/chat/conversations/{conversation_id}/messages?skip=0&limit=50`
+
+### WebSocket
+- Connect
+  - `WS /api/v1/chat/ws/conversations/{conversation_id}`
+  - Header: `Authorization: Bearer <access_token>`
+
+- Send (client -> server)
+  - `{"type":"message.send","content":"hello"}`
+
+- Receive (server -> client)
+  - `{"type":"message.new","message":{...}}`
+
+Notes:
+- WebSocket auth uses `Authorization: Bearer <token>` (works for non-browser WS clients).
+- Redis Pub/Sub is used to broadcast messages across multiple app instances.
+
+## Getting Started (Docker)
+1. Clone the repository:
+   - `git clone https://github.com/MinKhantt/real_time_chat_app.git`
+   - `cd real_time_chat_app`
+
+2. Create `.env`:
+   - `cp .env.example .env`
+
+3. Run:
+   - `docker-compose up -d`
+
+4. Open API docs:
+   - `http://localhost:8000/docs#/`
+
 ## Status
-
-This project is intended for learning and development purposes. 
-It is a work in progress and is being developed while I am learning backend development.
-
-Right now implemented secure login, registration and access control.
-Real-time chat functionality is in progress.
-
-## Getting Started with Docker
-### Clone the repository
-- git clone <https://github.com/MinKhantt/real_time_chat_app.git>
-- cd real_time_chat_app
-- create .env file and run - cp .env.example .env
-- then run - docker-compose up -d
-- and you can test in http://localhost:8000/docs#/
-
+This project is intended for learning and development. Group chat is not implemented yet.
